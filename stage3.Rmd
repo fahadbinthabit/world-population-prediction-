@@ -1,0 +1,116 @@
+---
+title: "stage 3 - time series"
+author: "Fahad BinThabit"
+date: "12/2/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## The data set is the total population since 1960 until 2017 
+## i am applying several modules , but i will stick with ARIMA to make the prediction 
+## all stages are explained 
+
+
+```{r loading library and dataset}
+
+#load the forecasting package 
+library(fpp2)
+library(tidyverse)
+library(readr)
+#load the data 
+data <- read_csv("population_total_long.csv")
+
+
+
+```
+
+## Declare this as time series data 
+
+
+```{r pressure, echo=FALSE}
+Y <- ts(data[,3],start=c(1960),end=c(2017),frequency = 12)
+
+```
+
+########################
+## Prelimiary Analysis
+########################
+
+
+
+```{r}
+#time plot
+autoplot(Y) + ggtitle(" world population per country") + ylab("")
+```
+
+```{r}
+#the data has strong trend . investigate transformation 
+
+# take the first difference in the data to remove the trends 
+
+DY <- diff(Y)
+autoplot(DY) + ggtitle(" world population per country") + ylab("")
+
+```
+
+```{r}
+# series apears stationary , use to investigate seasonality 
+
+ggseasonplot(DY) + ggtitle("seasonal plot : Change in population") +
+ ylab("")
+
+```
+
+##############################
+# our series Y has trend and seasonality , to remove the first difference . 
+#the differened series still has seasonality
+#
+# Forecast with various methods
+################################
+
+```{r}
+# use benchmark method 
+#let's use the seasonal naive method as our benchmark
+
+
+fit <- snaive(DY) #Residual sd: 118614368.4613 
+print(summary(fit))
+checkresiduals(fit)
+
+
+```
+
+############################
+#try different module
+########
+# Fit ETS method
+#######
+
+```{r}
+fit_ets <- ets(Y) #sigma:  sigma:  3.1989
+print(summary(fit_ets))
+checkresiduals(fit_ets)
+```
+## fit in ARIMA module 
+
+```{r}
+fit_arima <- auto.arima(Y, d=1, D=1, stepwise = FALSE, approximation = FALSE, trace = TRUE)
+print(summary(fit_arima))
+checkresiduals(fit_arima)
+```
+#########
+
+#forecast with ARIMA model
+
+```{r}
+fcst <- forecast(fit_arima,h=24)
+autoplot(fcst, include=90)
+print(summary(fcst))
+```
+
+
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
